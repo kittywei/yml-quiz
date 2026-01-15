@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>答案 - 于朦胧问答挑战</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- 全局重置与变量 --- */
+        :root {
+            /* 暗夜流光（低饱和高级灰变调）：深青 -> 深蓝 -> 深紫 */
+            --bg-gradient: linear-gradient(-45deg, #0F2027, #203A43, #2C5364, #24243E, #1F1C2C);
+            
+            /* 柠檬流光 (强调色) */
+            --lemon-gradient: linear-gradient(135deg, #FFD700 0%, #F37335 100%);
+            
+            /* 玻璃质感 */
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            
+            /* 文本色 */
+            --text-main: #FFFFFF;
+            --text-sub: #AAB7C4;
+        }
+
+        [v-cloak] { display: none; }
+
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Nunito', 'PingFang SC', sans-serif;
+            background: var(--bg-gradient);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text-main);
+            height: 100vh; overflow: hidden;
+            display: flex; justify-content: center;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        #app {
+            width: 100%; max-width: 480px; height: 100%;
+            position: relative; display: flex; flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 0 50px rgba(0,0,0,0.6);
+        }
+
+        /* --- 漂浮背景 --- */
+        .lemon-bg {
+            position: absolute; font-size: 10rem; opacity: 0.08; z-index: 0;
+            pointer-events: none; filter: blur(5px);
+            animation: float 8s infinite ease-in-out;
+        }
+        .lemon-1 { top: -40px; right: -40px; }
+        .lemon-2 { bottom: -40px; left: -40px; animation-delay: 4s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(30px) rotate(15deg); }
+        }
+
+        /* --- 页面通用 --- */
+        .screen {
+            flex: 1; display: flex; flex-direction: column;
+            padding: 24px; position: relative; z-index: 1;
+        }
+
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.4s ease; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+        /* --- 1. 开始页面 --- */
+        .start-screen { justify-content: center; align-items: center; text-align: center; }
+
+        .avatar-wrapper {
+            position: relative; border-radius: 50%; padding: 6px;
+            background: var(--lemon-gradient);
+            box-shadow: 0 0 40px rgba(243, 115, 53, 0.4);
+            margin-bottom: 30px;
+        }
+        .avatar-wrapper.large { width: 130px; height: 130px; }
+        .avatar-img {
+            width: 100%; height: 100%; border-radius: 50%;
+            object-fit: cover; background: #24243E; border: 3px solid #24243E; display: block;
+        }
+
+        .title {
+            font-size: 2.4rem; margin-bottom: 10px; color: #FFF; line-height: 1.2;
+            font-weight: 800; text-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .title span {
+            background: var(--lemon-gradient); -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 10px rgba(253, 200, 48, 0.3));
+        }
+        .subtitle { color: var(--text-sub); margin-bottom: 50px; font-size: 1.1rem; letter-spacing: 2px;}
+
+        .btn-group { display: flex; flex-direction: column; gap: 20px; width: 100%; padding: 0 20px; box-sizing: border-box;}
+        .btn {
+            padding: 16px 24px; border-radius: 50px; font-size: 1.1rem;
+            font-weight: 700; cursor: pointer; border: none; transition: all 0.3s ease;
+        }
+        .btn:active { transform: scale(0.96); }
+        .primary-btn {
+            background: var(--lemon-gradient); color: #141E30;
+            box-shadow: 0 4px 20px rgba(243, 115, 53, 0.3);
+        }
+        .outline-btn {
+            background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); color: #FFF;
+        }
+        .full-width { width: 100%; }
+
+        /* --- 2. 答题页面 --- */
+        .top-bar { margin-bottom: 40px; }
+        .timer {
+            font-family: monospace; font-size: 1.3rem;
+            background: var(--lemon-gradient); -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent; text-align: center; margin-bottom: 15px; font-weight: bold;
+        }
+        .progress-track {
+            height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; position: relative;
+        }
+        .progress-fill {
+            height: 100%; background: var(--lemon-gradient); border-radius: 10px; transition: width 0.5s ease;
+            box-shadow: 0 0 10px rgba(253, 200, 48, 0.5);
+        }
+        .progress-avatar {
+            position: absolute; top: 50%; width: 36px; height: 36px;
+            transform: translate(-50%, -50%); transition: left 0.5s ease; z-index: 2;
+        }
+        .progress-avatar img {
+            width: 100%; height: 100%; border-radius: 50%; border: 2px solid #FFF;
+        }
+
+        .question-card { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+        .q-index { color: var(--text-sub); font-size: 0.9rem; letter-spacing: 2px; margin-bottom: 10px; text-transform: uppercase;}
+        .q-text { font-size: 1.6rem; margin: 0 0 40px 0; color: #FFF; font-weight: 700; line-height: 1.4; }
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+        .option-btn {
+            background: var(--glass-bg); border: 1px solid var(--glass-border);
+            border-radius: 20px; padding: 20px; font-size: 1rem; color: #FFF;
+            cursor: pointer; transition: all 0.3s; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; min-height: 120px; font-weight: 600;
+        }
+        .option-btn:not(:disabled):hover {
+            border-color: #FDC830; background: rgba(253, 200, 48, 0.15); transform: translateY(-2px);
+        }
+        .option-btn.correct { border-color: #00b09b; background: rgba(0, 176, 155, 0.2); color: #96c93d; }
+        .option-btn.wrong { border-color: #FF416C; background: rgba(255, 75, 31, 0.2); color: #FF416C; }
+        .option-btn.disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .nav-controls { display: flex; justify-content: space-between; margin-top: 30px; }
+        .nav-btn { background: none; border: none; color: var(--text-sub); font-weight: bold; cursor: pointer; padding: 10px; }
+        .nav-btn.next { color: #FDC830; }
+
+        /* --- Modal 弹框 --- */
+        .modal-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);
+            z-index: 10; display: flex; justify-content: center; align-items: center; padding: 24px;
+        }
+        
+        /* ★★★ 修改点1：增加 position: relative 以便定位关闭按钮 */
+        .modal {
+            background: rgba(30, 30, 40, 0.9); border: 1px solid rgba(255,255,255,0.1);
+            width: 100%; border-radius: 30px; padding: 30px; text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6); animation: popIn 0.4s ease; color: #FFF;
+            position: relative; /* 关键 */
+        }
+        @keyframes popIn { from { transform: scale(0.9) translateY(20px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
+
+        .lemon-icon { font-size: 3.5rem; margin-bottom: 15px; filter: drop-shadow(0 0 10px rgba(253, 200, 48, 0.5)); }
+        .score-display span { 
+            display: block; font-size: 3.5rem; margin: 10px 0;
+            background: var(--lemon-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .input-name {
+            width: 100%; padding: 16px; background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1); color: #FFF; border-radius: 15px;
+            margin: 25px 0; font-size: 1.1rem; text-align: center; outline: none;box-sizing: border-box;
+        }
+        .input-name:focus { border-color: #FDC830; }
+
+        /* --- 排行榜 (含我的排名) --- */
+        .leaderboard-modal { text-align: left; height: 85%; display: flex; flex-direction: column; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h3 { margin: 0; font-size: 1.5rem; color: #FDC830; }
+        
+        /* 基础关闭按钮样式 */
+        .close-btn { background: none; border: none; font-size: 1.8rem; cursor: pointer; color: var(--text-sub); }
+        
+        /* ★★★ 修改点2：为 Submit Modal 内的关闭按钮增加特定定位 */
+        .submit-modal .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 2rem;
+            padding: 5px;
+            line-height: 1;
+        }
+        .submit-modal .close-btn:hover { color: #FFF; }
+
+        /* 我的排名卡片 */
+        .my-rank-card {
+            background: rgba(253, 200, 48, 0.1); /* 微黄色背景 */
+            border: 1px solid #FDC830;
+            border-radius: 12px;
+            padding: 15px 10px;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: 0.8fr 2fr 1fr 1fr;
+            gap: 8px;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(253, 200, 48, 0.1);
+        }
+        .my-rank-label {
+            grid-column: 1 / -1;
+            font-size: 0.75rem;
+            color: #FDC830;
+            margin-bottom: 5px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .my-rank-card .user-name { color: #FFF; font-weight: bold; }
+        .my-rank-card .rank-num { font-size: 1.2rem; color: #FDC830; font-weight: 900; }
+
+        /* 列表头 */
+        .rank-header {
+            display: grid; grid-template-columns: 0.8fr 2fr 1fr 1fr; gap: 8px;
+            padding: 0 10px 10px 10px; color: var(--text-sub); font-size: 0.8rem; font-weight: bold;
+            border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 5px;
+        }
+
+        /* 列表项 */
+        .rank-list { list-style: none; padding: 0; overflow-y: auto; flex: 1; }
+        .rank-item {
+            display: grid; grid-template-columns: 0.8fr 2fr 1fr 1fr; gap: 8px;
+            padding: 16px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.95rem; align-items: center;
+        }
+        .top-3 .rank-num { font-size: 1.4rem; }
+        .user-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #FFF; font-weight: bold;}
+        .score { color: #FDC830; font-weight: bold; }
+        .time { color: var(--text-sub); font-family: monospace; }
+
+        .rank-list::-webkit-scrollbar { width: 4px; }
+        .rank-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+
+        /* --- 音乐按钮样式 --- */
+        .music-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: #FFF;
+            font-size: 1.2rem;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer;
+            z-index: 200; /* 保证在最顶层 */
+            transition: all 0.3s ease;
+            outline: none;
+            backdrop-filter: blur(5px);
+        }
+
+        .music-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: scale(1.1);
+        }
+
+        .music-btn.playing {
+            background: var(--lemon-gradient); /* 播放时变色 */
+            border: none;
+            box-shadow: 0 0 15px rgba(253, 200, 48, 0.6);
+            animation: spin 3s linear infinite; /* 旋转动画 */
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+<div id="app" v-cloak>
+    <audio ref="audioRef" loop src="https://yml-quiz.doudu.tech/images/daan.mp3"></audio>
+    
+    <button class="music-btn" :class="{ playing: isMusicPlaying }" @click="toggleMusic" title="背景音乐">
+        <span v-if="isMusicPlaying">🎵</span>
+        <span v-else>🔇</span>
+    </button>
+    <div class="lemon-bg lemon-1">🍋</div>
+    <div class="lemon-bg lemon-2">🍋</div>
+
+    <transition name="fade" mode="out-in">
+        <div v-if="gameState === 'start'" class="screen start-screen" key="start">
+            <div class="avatar-wrapper large">
+                <img :src="personAvatar" alt="Person" class="avatar-img" />
+            </div>
+            <h1 class="title"><span>于朦胧</span><br>问答挑战</h1>
+            <p class="subtitle">测试你对于朦胧的了解程度，一共5题，答对越多、用时越短排名越靠前！</p>
+            
+            <div class="btn-group">
+                <button class="btn primary-btn" @click="startGame">开始挑战</button>
+                <button class="btn outline-btn" @click="showLeaderboard = true">排行榜 🏆</button>
+            </div>
+        </div>
+
+        <div v-else-if="gameState === 'playing'" class="screen quiz-screen" key="quiz">
+            <div class="top-bar">
+                <div class="timer">{{ formatTime(timer) }}</div>
+                <div class="progress-track">
+                    <div class="progress-fill" :style="{ width: progressPercentage + '%' }"></div>
+                    <div class="progress-avatar" :style="{ left: progressPercentage + '%' }">
+                        <img :src="personAvatar" alt="marker" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="question-card">
+                <span class="q-index">Question {{ currentQuestionIndex + 1 }}</span>
+                <h2 class="q-text">{{ currentQuestion.text }}</h2>
+                <div class="options-grid">
+                    <button 
+                        v-for="(option, idx) in currentQuestion.options" 
+                        :key="idx"
+                        class="option-btn"
+                        :class="getOptionClass(idx)"
+                        @click="handleAnswer(idx)"
+                        :disabled="currentQuestion.isAnswered"
+                    >
+                        <span class="opt-text">{{ option }}</span>
+                        <span v-if="currentQuestion.isAnswered && idx === currentQuestion.correct" class="icon">✅</span>
+                        <span v-if="currentQuestion.isAnswered && idx === currentQuestion.selected && idx !== currentQuestion.correct" class="icon">❌</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="nav-controls">
+                <button class="nav-btn" @click="prevQuestion" :disabled="currentQuestionIndex === 0">上一题</button>
+                <button class="nav-btn next" @click="nextQuestion">
+                    {{ isLastQuestion ? '完成答题' : '下一题' }}
+                </button>
+            </div>
+        </div>
+    </transition>
+
+    <div v-if="showSubmitModal" class="modal-overlay">
+        <div class="modal submit-modal">
+            <button class="close-btn" @click="closeSubmit" title="不提交分数，返回首页">×</button>
+
+            <div class="lemon-icon">🍋</div>
+            <h3>挑战完成！</h3>
+            <div class="score-display">
+                总分
+                <span>{{ score }}</span>
+            </div>
+            <p style="color:var(--text-sub); font-size:0.9rem;">用时： {{ formatTime(timer) }}</p>
+            
+            <input v-model="userName" type="text" placeholder="请输入您的昵称（1-10个字）" class="input-name" maxlength="10" />
+            <button class="btn primary-btn full-width" @click="submitResult">提交分数</button>
+        </div>
+    </div>
+
+    <div v-if="showLeaderboard" class="modal-overlay" @click.self="showLeaderboard = false">
+        <div class="modal leaderboard-modal">
+            <div class="modal-header">
+                <h3>排行榜</h3>
+                <button class="close-btn" @click="showLeaderboard = false">×</button>
+            </div>
+
+            <div v-if="userRankInfo" class="my-rank-card">
+                <div class="my-rank-label">MY RANKING</div>
+                <span class="rank-num">{{ userRankInfo.rank }}</span>
+                <span class="user-name">{{ userRankInfo.name }} (Me)</span>
+                <span class="score">{{ userRankInfo.score }}</span>
+                <span class="time">{{ userRankInfo.time }}</span>
+            </div>
+
+            <div class="rank-header">
+                <span>排名</span><span>昵称</span><span>分数</span><span>用时</span>
+            </div>
+            <p style="display: none;">暂无成绩记录，快来成为第一个吧！</p>
+            <ul class="rank-list">
+                <li v-for="(item, index) in leaderboard" :key="index" class="rank-item" :class="{'top-3': index < 3}">
+                    <span class="rank-num">
+                        {{ index === 0 ? '🥇' : (index === 1 ? '🥈' : (index === 2 ? '🥉' : index + 1)) }}
+                    </span>
+                    <span class="user-name">{{ item.name }}</span>
+                    <span class="score">{{ item.score }}</span>
+                    <span class="time">{{ item.time }}</span>
+                </li>
+            </ul>
+            
+            <div v-if="gameState !== 'start'" style="margin-top:20px;">
+                <button class="btn outline-btn full-width" @click="restartGame">再玩一次</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="questions.js"></script>
+<script>
+    const { createApp, ref, computed, onUnmounted } = Vue;
+    const allQuestions = Array.isArray(window.questions) ? window.questions : [];
+
+    const pickRandomQuestions = (source, count) => {
+        const pool = source.slice();
+        for (let i = pool.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [pool[i], pool[j]] = [pool[j], pool[i]];
+        }
+        return pool.slice(0, Math.min(count, pool.length)).map(q => ({
+            ...q,
+            options: Array.isArray(q.options) ? q.options.slice() : [],
+            selected: null,
+            isAnswered: false
+        }));
+    };
+
+    createApp({
+        setup() {
+            // --- 资源 ---
+            const personAvatar = ref("images/avatar.jpg"); 
+
+            // --- 游戏状态 ---
+            const gameState = ref('start'); 
+            const showSubmitModal = ref(false);
+            const showLeaderboard = ref(false);
+            const userName = ref('');
+            const timer = ref(0);
+            let timerInterval = null;
+            
+            const userRankInfo = ref(null);
+
+            // --- 音乐控制状态 ---
+            const audioRef = ref(null);
+            const isMusicPlaying = ref(false);
+
+            const toggleMusic = () => {
+                const audio = audioRef.value;
+                if (!audio) return;
+
+                if (isMusicPlaying.value) {
+                    audio.pause();
+                    isMusicPlaying.value = false;
+                } else {
+                    audio.play()
+                        .then(() => { isMusicPlaying.value = true; })
+                        .catch(err => {
+                            console.error("播放失败:", err);
+                        });
+                }
+            };
+
+            // --- 题目数据 ---
+            const questions = ref(pickRandomQuestions(allQuestions, 5));
+
+            const currentQuestionIndex = ref(0);
+            const currentQuestion = computed(() => questions.value[currentQuestionIndex.value]);
+            const isLastQuestion = computed(() => currentQuestionIndex.value === questions.value.length - 1);
+            
+            const score = computed(() => {
+                return questions.value.filter(q => q.selected === q.correct).length * 20;
+            });
+
+            const progressPercentage = computed(() => {
+                return ((currentQuestionIndex.value + (currentQuestion.value.isAnswered ? 1 : 0)) / questions.value.length) * 100;
+            });
+
+            // --- 排行榜数据 ---
+            const leaderboard = ref([
+                { name: "DarkLemon", score: 50, time: "00:15" },
+                { name: "NeonLight", score: 40, time: "00:20" },
+                { name: "Ghost", score: 30, time: "00:25" },
+            ]);
+
+            // --- 方法 ---
+            const formatTime = (seconds) => {
+                const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+                const s = (seconds % 60).toString().padStart(2, '0');
+                return `${m}:${s}`;
+            };
+
+            const startGame = () => {
+                gameState.value = 'playing';
+                currentQuestionIndex.value = 0;
+                timer.value = 0;
+                questions.value = pickRandomQuestions(allQuestions, 5);
+                
+                if (timerInterval) clearInterval(timerInterval);
+                timerInterval = setInterval(() => { timer.value++; }, 1000);
+            };
+
+            const handleAnswer = (optionIndex) => {
+                if (currentQuestion.value.isAnswered) return;
+                currentQuestion.value.selected = optionIndex;
+                currentQuestion.value.isAnswered = true;
+            };
+
+            const getOptionClass = (idx) => {
+                const q = currentQuestion.value;
+                if (!q.isAnswered) return '';
+                if (idx === q.correct) return 'correct';
+                if (idx === q.selected && idx !== q.correct) return 'wrong';
+                return 'disabled';
+            };
+
+            const nextQuestion = () => {
+                if (isLastQuestion.value) {
+                    endGame();
+                } else {
+                    currentQuestionIndex.value++;
+                }
+            };
+
+            const prevQuestion = () => {
+                if (currentQuestionIndex.value > 0) {
+                    currentQuestionIndex.value--;
+                }
+            };
+
+            const endGame = () => {
+                clearInterval(timerInterval);
+                showSubmitModal.value = true;
+            };
+
+            const submitResult = () => {
+                if (!userName.value.trim()) {
+                    alert("请输入昵称");
+                    return;
+                }
+                
+                const finalTime = formatTime(timer.value);
+                const newEntry = {
+                    name: userName.value,
+                    score: score.value,
+                    time: finalTime
+                };
+
+                leaderboard.value.push(newEntry);
+                leaderboard.value.sort((a, b) => b.score - a.score || a.time.localeCompare(b.time));
+
+                const myRankIndex = leaderboard.value.findIndex(item => item === newEntry);
+                if (myRankIndex !== -1) {
+                    userRankInfo.value = {
+                        rank: myRankIndex + 1,
+                        name: newEntry.name,
+                        score: newEntry.score,
+                        time: newEntry.time
+                    };
+                }
+                
+                showSubmitModal.value = false;
+                showLeaderboard.value = true;
+                gameState.value = 'finished'; 
+            };
+
+            const restartGame = () => {
+                showLeaderboard.value = false;
+                userName.value = '';
+                userRankInfo.value = null; 
+                gameState.value = 'start';
+            };
+            
+            // ★★★ 修改点4：新增关闭提交框的方法
+            const closeSubmit = () => {
+                showSubmitModal.value = false;
+                // 重置相关数据
+                userName.value = '';
+                userRankInfo.value = null;
+                // 回到开始页面
+                gameState.value = 'start';
+            };
+
+            onUnmounted(() => {
+                if (timerInterval) clearInterval(timerInterval);
+            });
+
+            return {
+                personAvatar,
+                gameState,
+                showSubmitModal,
+                showLeaderboard,
+                userName,
+                timer,
+                questions,
+                currentQuestionIndex,
+                currentQuestion,
+                isLastQuestion,
+                score,
+                progressPercentage,
+                leaderboard,
+                userRankInfo,
+                formatTime,
+                startGame,
+                handleAnswer,
+                getOptionClass,
+                nextQuestion,
+                prevQuestion,
+                submitResult,
+                restartGame,
+                audioRef,
+                isMusicPlaying,
+                toggleMusic,
+                closeSubmit // 导出新方法
+            };
+        }
+    }).mount('#app');
+</script>
+
+</body>
+</html>
