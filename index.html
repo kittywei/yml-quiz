@@ -90,12 +90,13 @@
         }
 
         .title {
-            font-size: 2.4rem; margin-bottom: 10px; color: #FFF; line-height: 1.2;
+            font-size: 2.2rem; margin-bottom: 10px; color: #FFF; line-height: 1.2;
             font-weight: 800; text-shadow: 0 5px 15px rgba(0,0,0,0.3);
         }
         .title span {
             background: var(--lemon-gradient); -webkit-background-clip: text;
             -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 10px rgba(253, 200, 48, 0.3));
+            font-size: 1.4em;
         }
         .subtitle { color: var(--text-sub); margin-bottom: 50px; font-size: 1.1rem; letter-spacing: 2px;}
 
@@ -287,6 +288,12 @@
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
+        .user-hint{
+    font-size: .8rem;
+    text-align: center;
+    padding-bottom: 2rem;
+    color: #637383;
+        }
     </style>
 </head>
 <body>
@@ -306,7 +313,7 @@
             <div class="avatar-wrapper large">
                 <img :src="personAvatar" alt="Person" class="avatar-img" />
             </div>
-            <h1 class="title"><span>于朦胧</span><br>问答挑战</h1>
+            <h1 class="title"><span>答案</span><br>于朦胧问答挑战</h1>
             <p class="subtitle">测试你对于朦胧的了解程度，一共5题，答对越多、用时越短排名越靠前！</p>
             
             <div class="btn-group">
@@ -354,6 +361,7 @@
         </div>
     </transition>
 
+        <div class="user-hint">此为纪念程序，所有资源均来源于网络公开资料。</div>
     <div v-if="showSubmitModal" class="modal-overlay">
         <div class="modal submit-modal">
             <button class="close-btn" @click="closeSubmit" title="不提交分数，返回首页">×</button>
