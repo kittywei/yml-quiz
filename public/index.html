@@ -7,9 +7,13 @@
     <meta property="og:title" content="答案 - 于朦胧问答挑战">
     <meta property="og:description" content="测试你对于朦胧的了解程度，一共5题，答对越多、用时越短排名越靠前！">
     <meta property="og:type" content="website">
-    <meta property="og:image" content="images/yml-quiz-og-banner.jpg">
+    <meta property="og:image" content="https://yml-quiz2.doudu.tech/images/yml-quiz-og-banner.jpg">
     <meta property="og:locale" content="zh_CN">
     <meta property="og:site_name" content="于朦胧问答挑战">
+    <link
+      rel="icon"
+      href="https://yml-quiz.doudu.tech/images/favicon.ico"
+    />
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     
     <style>
@@ -91,7 +95,7 @@
         .avatar-wrapper.large { width: 130px; height: 130px; }
         .avatar-img {
             width: 100%; height: 100%; border-radius: 50%;
-            object-fit: cover; background: #24243E; border: 3px solid #24243E; display: block;
+            object-fit: cover; background: #2e5e71; border: 3px solid #2e5e71; display: block;
         }
 
         .title {
@@ -300,11 +304,21 @@
     color: #637383;
         }
     </style>
+    <script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?386f463ae921f6d2ee23cfdab185140d";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
 </head>
 <body>
 
 <div id="app" v-cloak>
-    <audio ref="audioRef" loop src="https://yml-quiz.doudu.tech/images/daan.mp3"></audio>
+    <audio ref="audioRef" loop src="images/daan.mp3"></audio>
     
     <button class="music-btn" :class="{ playing: isMusicPlaying }" @click="toggleMusic" title="背景音乐">
         <span v-if="isMusicPlaying">🎵</span>

@@ -7,3 +7,7 @@ assets = { directory = "public", binding = "ASSETS" }
 kv_namespaces = [
   { binding = "RESULTS_KV", id = "790eaea470284112a2a0403e429bcf22" }
 ]
+
+[[routes]]
+pattern = "yml-quiz.doudu.tech"
+custom_domain = true
