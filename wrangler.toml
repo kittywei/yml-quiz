@@ -1,0 +1,9 @@
+name = "yml-quiz"
+main = "worker.js"
+compatibility_date = "2024-08-01"
+
+assets = { directory = "public", binding = "ASSETS" }
+
+kv_namespaces = [
+  { binding = "RESULTS_KV", id = "790eaea470284112a2a0403e429bcf22" }
+]

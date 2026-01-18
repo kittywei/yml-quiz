@@ -4,8 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>答案 - 于朦胧问答挑战</title>
+    <meta property="og:title" content="答案 - 于朦胧问答挑战">
+    <meta property="og:description" content="测试你对于朦胧的了解程度，一共5题，答对越多、用时越短排名越靠前！">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="images/yml-quiz-og-banner.jpg">
+    <meta property="og:locale" content="zh_CN">
+    <meta property="og:site_name" content="于朦胧问答挑战">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
     
     <style>
         /* --- 全局重置与变量 --- */
@@ -29,7 +34,7 @@
 
         body {
             margin: 0; padding: 0;
-            font-family: 'Nunito', 'PingFang SC', sans-serif;
+            font-family: 'PingFang SC', sans-serif;
             background: var(--bg-gradient);
             background-size: 400% 400%;
             animation: gradientBG 15s ease infinite;
@@ -212,7 +217,7 @@
             border: 1px solid #FDC830;
             border-radius: 12px;
             padding: 15px 10px;
-            margin-bottom: 20px;
+            margin-top: 10px;
             display: grid;
             grid-template-columns: 0.8fr 2fr 1fr 1fr;
             gap: 8px;
@@ -245,7 +250,7 @@
             padding: 16px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.95rem; align-items: center;
         }
         .top-3 .rank-num { font-size: 1.4rem; }
-        .user-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #FFF; font-weight: bold;}
+        .user-name { color: #FFF; font-weight: bold;}
         .score { color: #FDC830; font-weight: bold; }
         .time { color: var(--text-sub); font-family: monospace; }
 
@@ -318,7 +323,7 @@
             
             <div class="btn-group">
                 <button class="btn primary-btn" @click="startGame">开始挑战</button>
-                <button class="btn outline-btn" @click="showLeaderboard = true">排行榜 🏆</button>
+                <button class="btn outline-btn" @click="openLeaderboard">排行榜 🏆</button>
             </div>
         </div>
 
@@ -379,25 +384,25 @@
         </div>
     </div>
 
-    <div v-if="showLeaderboard" class="modal-overlay" @click.self="showLeaderboard = false">
+    <div v-if="showLeaderboard" class="modal-overlay">
         <div class="modal leaderboard-modal">
             <div class="modal-header">
                 <h3>排行榜</h3>
-                <button class="close-btn" @click="showLeaderboard = false">×</button>
-            </div>
-
-            <div v-if="userRankInfo" class="my-rank-card">
-                <div class="my-rank-label">MY RANKING</div>
-                <span class="rank-num">{{ userRankInfo.rank }}</span>
-                <span class="user-name">{{ userRankInfo.name }} (Me)</span>
-                <span class="score">{{ userRankInfo.score }}</span>
-                <span class="time">{{ userRankInfo.time }}</span>
+                <button class="close-btn" @click="closeLeaderboard">×</button>
             </div>
 
             <div class="rank-header">
                 <span>排名</span><span>昵称</span><span>分数</span><span>用时</span>
             </div>
-            <p style="display: none;">暂无成绩记录，快来成为第一个吧！</p>
+
+            <div v-if="userRankInfo" class="my-rank-card">
+                <div class="my-rank-label">我的排名</div>
+                <span class="rank-num">{{ userRankInfo.rank }}</span>
+                <span class="user-name">{{ userRankInfo.name }} </span>
+                <span class="score">{{ userRankInfo.score }}</span>
+                <span class="time">{{ userRankInfo.time }}</span>
+            </div>
+            <p v-if="leaderboard.length === 0" style="text-align: center;color:var(--text-sub)">暂无成绩记录，快来成为第一个吧！</p>
             <ul class="rank-list">
                 <li v-for="(item, index) in leaderboard" :key="index" class="rank-item" :class="{'top-3': index < 3}">
                     <span class="rank-num">
@@ -485,11 +490,7 @@
             });
 
             // --- 排行榜数据 ---
-            const leaderboard = ref([
-                { name: "DarkLemon", score: 50, time: "00:15" },
-                { name: "NeonLight", score: 40, time: "00:20" },
-                { name: "Ghost", score: 30, time: "00:25" },
-            ]);
+            const leaderboard = ref([]);
 
             // --- 方法 ---
             const formatTime = (seconds) => {
@@ -538,43 +539,84 @@
 
             const endGame = () => {
                 clearInterval(timerInterval);
+                loadSavedName();
                 showSubmitModal.value = true;
             };
 
-            const submitResult = () => {
+            const fetchLeaderboard = async () => {
+                try {
+                    const res = await fetch('/api/leaderboard');
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const data = await res.json();
+                    leaderboard.value = Array.isArray(data.leaderboard) ? data.leaderboard : [];
+                } catch (err) {
+                    console.error("加载排行榜失败:", err);
+                    leaderboard.value = [];
+                }
+            };
+
+            const openLeaderboard = async () => {
+                await fetchLeaderboard();
+                showLeaderboard.value = true;
+            };
+
+            const saveName = (name) => {
+                const trimmed = name.trim();
+                if (!trimmed) return;
+                localStorage.setItem("yml_quiz_last_name", trimmed);
+            };
+
+            const loadSavedName = () => {
+                const last = localStorage.getItem("yml_quiz_last_name");
+                userName.value = last ? last : "";
+            };
+
+            const submitResult = async () => {
                 if (!userName.value.trim()) {
                     alert("请输入昵称");
                     return;
                 }
                 
-                const finalTime = formatTime(timer.value);
-                const newEntry = {
-                    name: userName.value,
+                const payload = {
+                    name: userName.value.trim(),
                     score: score.value,
-                    time: finalTime
+                    timeSeconds: timer.value
                 };
 
-                leaderboard.value.push(newEntry);
-                leaderboard.value.sort((a, b) => b.score - a.score || a.time.localeCompare(b.time));
+                try {
+                    const res = await fetch('/api/submit', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const data = await res.json();
+                    saveName(payload.name);
 
-                const myRankIndex = leaderboard.value.findIndex(item => item === newEntry);
-                if (myRankIndex !== -1) {
-                    userRankInfo.value = {
-                        rank: myRankIndex + 1,
-                        name: newEntry.name,
-                        score: newEntry.score,
-                        time: newEntry.time
-                    };
+                    leaderboard.value = Array.isArray(data.leaderboard) ? data.leaderboard : [];
+                    if (data.rank && data.entry) {
+                        userRankInfo.value = {
+                            rank: data.rank,
+                            name: data.entry.name,
+                            score: data.entry.score,
+                            time: data.entry.time
+                        };
+                    } else {
+                        userRankInfo.value = null;
+                    }
+
+                    showSubmitModal.value = false;
+                    showLeaderboard.value = true;
+                    gameState.value = 'finished';
+                } catch (err) {
+                    console.error("提交失败:", err);
+                    alert("提交失败，请稍后再试");
                 }
-                
-                showSubmitModal.value = false;
-                showLeaderboard.value = true;
-                gameState.value = 'finished'; 
             };
 
             const restartGame = () => {
                 showLeaderboard.value = false;
-                userName.value = '';
+                loadSavedName();
                 userRankInfo.value = null; 
                 gameState.value = 'start';
             };
@@ -582,16 +624,22 @@
             // ★★★ 修改点4：新增关闭提交框的方法
             const closeSubmit = () => {
                 showSubmitModal.value = false;
-                // 重置相关数据
-                userName.value = '';
-                userRankInfo.value = null;
                 // 回到开始页面
-                gameState.value = 'start';
+                restartGame();
+            };
+
+            const closeLeaderboard = () => {
+                showLeaderboard.value = false;
+                // 回到开始页面
+                restartGame();
             };
 
             onUnmounted(() => {
                 if (timerInterval) clearInterval(timerInterval);
             });
+
+            loadSavedName();
+            fetchLeaderboard();
 
             return {
                 personAvatar,
@@ -615,6 +663,8 @@
                 nextQuestion,
                 prevQuestion,
                 submitResult,
+                openLeaderboard,
+                closeLeaderboard,
                 restartGame,
                 audioRef,
                 isMusicPlaying,
