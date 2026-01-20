@@ -825,7 +825,6 @@
         ? window.questions
         : [];
       const STORAGE_REMAINING_KEY = "yml_quiz_remaining_ids";
-      const STORAGE_LAST_RANK_KEY = "yml_quiz_last_rank";
 
       const getAllQuestionIndices = () => allQuestions.map((_, idx) => idx);
 
@@ -1084,34 +1083,6 @@
             userName.value = last ? last : "";
           };
 
-          const saveLastRankInfo = (info) => {
-            if (!info) {
-              localStorage.removeItem(STORAGE_LAST_RANK_KEY);
-              return;
-            }
-            localStorage.setItem(STORAGE_LAST_RANK_KEY, JSON.stringify(info));
-          };
-
-          const loadLastRankInfo = () => {
-            try {
-              const raw = localStorage.getItem(STORAGE_LAST_RANK_KEY);
-              if (!raw) return null;
-              const parsed = JSON.parse(raw);
-              if (!parsed || typeof parsed !== "object") return null;
-              const rankType = typeof parsed.rank;
-              if (
-                (rankType !== "number" && rankType !== "string") ||
-                typeof parsed.name !== "string"
-              ) {
-                return null;
-              }
-              return parsed;
-            } catch (err) {
-              console.warn("读取上次排名失败:", err);
-              return null;
-            }
-          };
-
           const submitResult = async () => {
             if (!userName.value.trim()) {
               alert("请输入昵称");
@@ -1144,10 +1115,8 @@
                   score: data.entry.score,
                   time: data.entry.time,
                 };
-                saveLastRankInfo(userRankInfo.value);
               } else {
                 userRankInfo.value = null;
-                saveLastRankInfo(null);
               }
 
               showSubmitModal.value = false;
@@ -1162,6 +1131,7 @@
           const restartGame = () => {
             showLeaderboard.value = false;
             loadSavedName();
+            userRankInfo.value = null;
             gameState.value = "start";
           };
 
@@ -1183,7 +1153,6 @@
           });
 
           loadSavedName();
-          userRankInfo.value = loadLastRankInfo();
           fetchLeaderboard();
 
           return {
